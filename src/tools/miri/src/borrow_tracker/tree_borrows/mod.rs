@@ -607,10 +607,10 @@ pub trait EvalContextExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
             // (`ty_is_freeze || true` in `new_reserved` will always be `true`).
             freeze_perm: Permission::new_reserved_frz(),
             freeze_read: true,
-            freeze_write: true, // TODO: is this correct?
+            freeze_write: true,
             nonfreeze_perm: Permission::new_reserved_frz(),
             nonfreeze_read: true,
-            nonfreeze_write: true, // TODO: is this correct?
+            nonfreeze_write: true,
             outside_perm: Permission::new_reserved_frz(),
             protector: Some(ProtectorKind::StrongProtector),
         };
