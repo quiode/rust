@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use rustc_abi::Size;
 use rustc_hir::attrs::AttributeKind;
 use rustc_hir::find_attr;
@@ -308,18 +310,19 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
 
         // Compute initial "inside" permissions.
         let loc_state = |frozen: bool| -> (LocationState, Option<AccessKind>) {
-            let (perm, read, write) = if frozen {
+            let (perm, read, _write) = if frozen {
                 (new_perm.freeze_perm, new_perm.freeze_read, new_perm.freeze_write)
             } else {
                 (new_perm.nonfreeze_perm, new_perm.nonfreeze_read, new_perm.nonfreeze_write)
             };
             let sifa = perm.strongest_idempotent_foreign_access(protected);
 
-            let access = match (read, write) {
+            let access = match (read, false) {
                 (_, true) => Some(AccessKind::Write),
                 (true, false) => Some(AccessKind::Read),
                 (false, false) => None,
             };
+            assert_ne!(access, Some(AccessKind::Write));
             let state = if access.is_some() {
                 LocationState::new_accessed(perm, sifa)
             } else {
@@ -356,6 +359,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
 
         for (perm_range, (_perm, access)) in inside_perms.iter_all() {
             if let Some(access) = access {
+                assert_ne!(*access, AccessKind::Write);
                 // Some reborrows incur a read/write access to the parent.
                 // As we always do a read when we do a write, we always do a read here and conditionally also a write.
 
@@ -365,45 +369,45 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                     size: Size::from_bytes(perm_range.end - perm_range.start),
                 };
 
-                let (alloc_extra, machine) = this.get_alloc_extra_mut(alloc_id)?;
-                let mut tree_borrows = alloc_extra.borrow_tracker_tb().borrow_mut();
+                // let (alloc_extra, machine) = this.get_alloc_extra_mut(alloc_id)?;
+                let alloc_extra = this.get_alloc_extra(alloc_id)?;
+                // let tree_borrows = alloc_extra.borrow_tracker_tb().borrow_mut();
 
-                tree_borrows.perform_access(
-                    parent_prov,
-                    range_in_alloc,
-                    *access,
-                    diagnostics::AccessCause::Reborrow,
-                    machine.borrow_tracker.as_ref().unwrap(),
-                    alloc_id,
-                    machine.current_user_relevant_span(),
-                )?;
+                // tree_borrows.perform_access(
+                //     parent_prov,
+                //     range_in_alloc,
+                //     AccessKind::Read,
+                //     diagnostics::AccessCause::Reborrow,
+                //     machine.borrow_tracker.as_ref().unwrap(),
+                //     alloc_id,
+                //     machine.current_user_relevant_span(),
+                // )?;
 
                 // don't need it anymore
-                drop(tree_borrows);
 
                 // Also inform the data race model (but only if any bytes are actually affected).
-                if range_in_alloc.size.bytes() > 0 {
-                    if let Some(data_race) = alloc_extra.data_race.as_vclocks_mut() {
-                        match access {
-                            AccessKind::Read =>
-                                data_race.read_non_atomic(
-                                    alloc_id,
-                                    range_in_alloc,
-                                    NaReadType::Retag,
-                                    Some(place.layout.ty),
-                                    &machine,
-                                )?,
-                            AccessKind::Write =>
-                                data_race.write_non_atomic(
-                                    alloc_id,
-                                    range_in_alloc,
-                                    NaWriteType::Retag,
-                                    Some(place.layout.ty),
-                                    machine,
-                                )?,
-                        };
-                    }
-                }
+                // if range_in_alloc.size.bytes() > 0 {
+                //     if let Some(data_race) = alloc_extra.data_race.as_vclocks_mut() {
+                //         match access {
+                //             AccessKind::Read =>
+                //                 data_race.read_non_atomic(
+                //                     alloc_id,
+                //                     range_in_alloc,
+                //                     NaReadType::Retag,
+                //                     Some(place.layout.ty),
+                //                     &machine,
+                //                 )?,
+                //             AccessKind::Write =>
+                //                 data_race.write_non_atomic(
+                //                     alloc_id,
+                //                     range_in_alloc,
+                //                     NaWriteType::Retag,
+                //                     Some(place.layout.ty),
+                //                     machine,
+                //                 )?,
+                //         };
+                //     }
+                // }
             }
         }
 
