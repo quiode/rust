@@ -369,8 +369,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                     size: Size::from_bytes(perm_range.end - perm_range.start),
                 };
 
-                // let (alloc_extra, machine) = this.get_alloc_extra_mut(alloc_id)?;
-                let alloc_extra = this.get_alloc_extra(alloc_id)?;
+                let (alloc_extra, machine) = this.get_alloc_extra_mut(alloc_id)?;
                 // let tree_borrows = alloc_extra.borrow_tracker_tb().borrow_mut();
 
                 // tree_borrows.perform_access(
