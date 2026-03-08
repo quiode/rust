@@ -365,7 +365,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                     size: Size::from_bytes(perm_range.end - perm_range.start),
                 };
 
-                let (alloc_extra, machine) = this.get_alloc_extra_mut(alloc_id)?;
+                let alloc_extra = this.get_alloc_extra(alloc_id)?;
                 let mut tree_borrows = alloc_extra.borrow_tracker_tb().borrow_mut();
 
                 tree_borrows.perform_access(
@@ -373,9 +373,9 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                     range_in_alloc,
                     *access,
                     diagnostics::AccessCause::Reborrow,
-                    machine.borrow_tracker.as_ref().unwrap(),
+                    this.machine.borrow_tracker.as_ref().unwrap(),
                     alloc_id,
-                    machine.current_user_relevant_span(),
+                    this.machine.current_user_relevant_span(),
                 )?;
 
                 // don't need it anymore
@@ -383,7 +383,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
 
                 // Also inform the data race model (but only if any bytes are actually affected).
                 if range_in_alloc.size.bytes() > 0 {
-                    if let Some(data_race) = alloc_extra.data_race.as_vclocks_mut() {
+                    if let Some(data_race) = alloc_extra.data_race.as_vclocks_ref() {
                         match access {
                             AccessKind::Read =>
                                 data_race.read_non_atomic(
@@ -391,7 +391,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                                     range_in_alloc,
                                     NaReadType::Retag,
                                     Some(place.layout.ty),
-                                    &machine,
+                                    &this.machine,
                                 )?,
                             AccessKind::Write =>
                                 data_race.write_non_atomic(
@@ -399,7 +399,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                                     range_in_alloc,
                                     NaWriteType::Retag,
                                     Some(place.layout.ty),
-                                    machine,
+                                    &this.machine,
                                 )?,
                         };
                     }
