@@ -177,7 +177,7 @@ impl<'tcx> NewPermission {
             !no_writable
                 && Some(Mutability::Mut) == ref_mutability
                 && initial_read(perm)
-                && matches!(retag_kind, RetagKind::FnEntry | RetagKind::Default) // TODO: insert write on all mutable borrows or only function entry? function entry would be enough for current writable optimization
+                && matches!(retag_kind, RetagKind::FnEntry) // TODO: insert write on all mutable borrows or only function entry? function entry would be enough for current writable optimization
         };
 
         Some(NewPermission {
