@@ -1,6 +1,7 @@
 // This code no longer works using the strong mode in tree borrows.
 // This code tests that. The passing version is in `pass/tree_borrows/strong_mode/as_mut_ptr.rs`.
 //@compile-flags: -Zmiri-tree-borrows
+//@error-in-other-file: Undefined Behavior: reborrow through <249> at alloc111[0x0] is forbidden
 
 #![feature(rustc_attrs)]
 #![allow(internal_features)]
