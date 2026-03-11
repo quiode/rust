@@ -878,6 +878,8 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
     /// Also returns a ptr to `self.extra` so that the caller can use it in parallel with the
     /// allocation.
     ///
+    /// This causes UB if the allocation is not mutable!
+    ///
     /// You almost certainly want to use `get_ptr_alloc`/`get_ptr_alloc_mut` instead.
     pub fn get_alloc_raw_mut(
         &mut self,
@@ -910,6 +912,8 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
 
     /// Gives raw, mutable access to the `Allocation` address, without bounds or alignment checks.
     /// The caller is responsible for calling the access hooks!
+    ///
+    /// This causes UB if the allocation is not mutable!
     pub fn get_alloc_bytes_unchecked_raw_mut(
         &mut self,
         id: AllocId,
@@ -962,6 +966,8 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
     }
 
     /// Return the `extra` field of the given allocation.
+    /// 
+    /// This causes UB if the allocation is not mutable!
     pub fn get_alloc_extra_mut<'a>(
         &'a mut self,
         id: AllocId,
@@ -1155,6 +1161,7 @@ impl<'tcx, M: Machine<'tcx>> InterpCx<'tcx, M> {
         interp_ok(ty)
     }
 
+    /// This causes UB if the allocation is not mutable!
     pub fn alloc_mark_immutable(&mut self, id: AllocId) -> InterpResult<'tcx> {
         self.get_alloc_raw_mut(id)?.0.mutability = Mutability::Not;
         interp_ok(())
