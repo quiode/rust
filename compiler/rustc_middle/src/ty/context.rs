@@ -38,7 +38,7 @@ use rustc_hir::lang_items::LangItem;
 use rustc_hir::limit::Limit;
 use rustc_hir::{self as hir, CRATE_HIR_ID, HirId, Node, TraitCandidate, find_attr};
 use rustc_index::IndexVec;
-use rustc_serialize::opaque::{FileEncodeResult, FileEncoder};
+use rustc_macros::Diagnostic;
 use rustc_session::Session;
 use rustc_session::config::CrateType;
 use rustc_session::cstore::{CrateStoreDyn, Untracked};
@@ -55,7 +55,7 @@ use crate::dep_graph::dep_node::make_metadata;
 use crate::dep_graph::{DepGraph, DepKindVTable, DepNodeIndex};
 use crate::ich::StableHashingContext;
 use crate::infer::canonical::{CanonicalParamEnvCache, CanonicalVarKind};
-use crate::lint::{diag_lint_level, lint_level};
+use crate::lint::diag_lint_level;
 use crate::metadata::ModChild;
 use crate::middle::codegen_fn_attrs::{CodegenFnAttrs, TargetFeature};
 use crate::middle::resolve_bound_vars;
@@ -564,7 +564,7 @@ impl<'tcx> CommonConsts<'tcx> {
             ))
         };
 
-        let valtree_zst = mk_valtree(ty::ValTreeKind::Branch(Box::default()));
+        let valtree_zst = mk_valtree(ty::ValTreeKind::Branch(List::empty()));
         let valtree_true = mk_valtree(ty::ValTreeKind::Leaf(ty::ScalarInt::TRUE));
         let valtree_false = mk_valtree(ty::ValTreeKind::Leaf(ty::ScalarInt::FALSE));
 
@@ -1495,10 +1495,6 @@ impl<'tcx> TyCtxt<'tcx> {
         f(StableHashingContext::new(self.sess, &self.untracked))
     }
 
-    pub fn serialize_query_result_cache(self, encoder: FileEncoder) -> FileEncodeResult {
-        self.query_system.on_disk_cache.as_ref().map_or(Ok(0), |c| c.serialize(self, encoder))
-    }
-
     #[inline]
     pub fn local_crate_exports_generics(self) -> bool {
         // compiler-builtins has some special treatment in codegen, which can result in confusing
@@ -1690,6 +1686,12 @@ impl<'tcx> TyCtxt<'tcx> {
     }
 
     pub fn report_unused_features(self) {
+        #[derive(Diagnostic)]
+        #[diag("feature `{$feature}` is declared but not used")]
+        struct UnusedFeature {
+            feature: Symbol,
+        }
+
         // Collect first to avoid holding the lock while linting.
         let used_features = self.sess.used_features.lock();
         let unused_features = self
@@ -1708,13 +1710,11 @@ impl<'tcx> TyCtxt<'tcx> {
             .collect::<Vec<_>>();
 
         for (feature, span) in unused_features {
-            self.node_span_lint(
+            self.emit_node_span_lint(
                 rustc_session::lint::builtin::UNUSED_FEATURES,
                 CRATE_HIR_ID,
                 span,
-                |lint| {
-                    lint.primary_message(format!("feature `{}` is declared but not used", feature));
-                },
+                UnusedFeature { feature },
             );
         }
     }
@@ -2542,21 +2542,6 @@ impl<'tcx> TyCtxt<'tcx> {
         diag_lint_level(self.sess, lint, level, Some(span.into()), decorator)
     }
 
-    /// Emit a lint at the appropriate level for a hir node, with an associated span.
-    ///
-    /// [`lint_level`]: rustc_middle::lint::lint_level#decorate-signature
-    #[track_caller]
-    pub fn node_span_lint(
-        self,
-        lint: &'static Lint,
-        hir_id: HirId,
-        span: impl Into<MultiSpan>,
-        decorate: impl for<'a, 'b> FnOnce(&'b mut Diag<'a, ()>),
-    ) {
-        let level = self.lint_level_at_node(lint, hir_id);
-        lint_level(self.sess, lint, level, Some(span.into()), decorate);
-    }
-
     /// Find the appropriate span where `use` and outer attributes can be inserted at.
     pub fn crate_level_attribute_injection_span(self) -> Span {
         let node = self.hir_node(hir::CRATE_HIR_ID);
@@ -2600,21 +2585,7 @@ impl<'tcx> TyCtxt<'tcx> {
         diag_lint_level(self.sess, lint, level, None, decorator);
     }
 
-    /// Emit a lint at the appropriate level for a hir node.
-    ///
-    /// [`lint_level`]: rustc_middle::lint::lint_level#decorate-signature
-    #[track_caller]
-    pub fn node_lint(
-        self,
-        lint: &'static Lint,
-        id: HirId,
-        decorate: impl for<'a, 'b> FnOnce(&'b mut Diag<'a, ()>),
-    ) {
-        let level = self.lint_level_at_node(lint, id);
-        lint_level(self.sess, lint, level, None, decorate);
-    }
-
-    pub fn in_scope_traits(self, id: HirId) -> Option<&'tcx [TraitCandidate]> {
+    pub fn in_scope_traits(self, id: HirId) -> Option<&'tcx [TraitCandidate<'tcx>]> {
         let map = self.in_scope_traits_map(id.owner)?;
         let candidates = map.get(&id.local_id)?;
         Some(candidates)
@@ -2777,7 +2748,9 @@ impl<'tcx> TyCtxt<'tcx> {
         self.resolutions(()).extern_crate_map.get(&def_id).copied()
     }
 
-    pub fn resolver_for_lowering(self) -> &'tcx Steal<(ty::ResolverAstLowering, Arc<ast::Crate>)> {
+    pub fn resolver_for_lowering(
+        self,
+    ) -> &'tcx Steal<(ty::ResolverAstLowering<'tcx>, Arc<ast::Crate>)> {
         self.resolver_for_lowering_raw(()).0
     }
 
