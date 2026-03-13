@@ -13,7 +13,7 @@ fn main() {
     let b = unsafe { &mut *ptr };
 
     let _c = as_mut_ptr(a);
-    println!("{:?}", b);
+    println!("{:?}", *b);
 }
 
 #[rustc_no_writable]

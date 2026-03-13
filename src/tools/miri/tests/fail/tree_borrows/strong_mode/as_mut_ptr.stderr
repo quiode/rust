@@ -1,11 +1,8 @@
 error: Undefined Behavior: reborrow through <TAG> at ALLOC[0x0] is forbidden
-  --> RUSTLIB/core/src/fmt/mod.rs:LL:CC
+  --> tests/fail/tree_borrows/strong_mode/as_mut_ptr.rs:LL:CC
    |
-LL |             fn fmt(&self, f: &mut Formatter<'_>) -> Result { $tr::fmt(&**self, f) }
-   |                                                                       ^^^^^^^ Undefined Behavior occurred here
-...
-LL | fmt_refs! { Debug, Display, Octal, Binary, LowerHex, UpperHex, LowerExp, UpperExp }
-   | ----------------------------------------------------------------------------------- in this macro invocation
+LL |     println!("{:?}", *b);
+   |                      ^^ Undefined Behavior occurred here
    |
    = help: this indicates a potential bug in the program: it performed an invalid operation, but the Tree Borrows rules it violated are still experimental
    = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/tree-borrows.md for further information
@@ -21,28 +18,6 @@ help: the accessed tag <TAG> later transitioned to Disabled due to a reborrow (a
 LL | pub const fn as_mut_ptr(x: &mut [&str; 3]) -> *mut str {
    |                         ^
    = help: this transition corresponds to a loss of read and write permissions
-   = note: stack backtrace:
-           0: <&mut [&str; 3] as std::fmt::Debug>::fmt
-               at RUSTLIB/core/src/fmt/mod.rs:LL:CC
-           1: core::fmt::rt::Argument::fmt
-               at RUSTLIB/core/src/fmt/rt.rs:LL:CC
-           2: std::fmt::write
-               at RUSTLIB/core/src/fmt/mod.rs:LL:CC
-           3: std::io::default_write_fmt
-               at RUSTLIB/std/src/io/mod.rs:LL:CC
-           4: <std::io::StdoutLock<'_> as std::io::Write>::write_fmt
-               at RUSTLIB/std/src/io/mod.rs:LL:CC
-           5: <&std::io::Stdout as std::io::Write>::write_fmt
-               at RUSTLIB/std/src/io/stdio.rs:LL:CC
-           6: <std::io::Stdout as std::io::Write>::write_fmt
-               at RUSTLIB/std/src/io/stdio.rs:LL:CC
-           7: std::io::stdio::print_to
-               at RUSTLIB/std/src/io/stdio.rs:LL:CC
-           8: std::io::_print
-               at RUSTLIB/std/src/io/stdio.rs:LL:CC
-           9: main
-               at RUSTLIB/std/src/macros.rs:LL:CC
-   = note: this error originates in the macro `fmt_refs` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
 
