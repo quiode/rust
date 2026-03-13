@@ -2,9 +2,6 @@
 // This code tests that. The passing version is in `pass/tree_borrows/strong_mode/as_mut_ptr.rs`.
 //@compile-flags: -Zmiri-tree-borrows
 
-#![feature(rustc_attrs)]
-#![allow(internal_features)]
-
 fn main() {
     let mut x = ["one", "two", "three"];
 
