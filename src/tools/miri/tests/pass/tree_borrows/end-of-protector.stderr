@@ -9,18 +9,18 @@ Warning: this tree is indicative only. Some tags may have been hidden.
 Warning: this tree is indicative only. Some tags may have been hidden.
 0..   1
 | Act |    └─┬──<TAG=root of the allocation>
-| Res |      └─┬──<TAG=data>
-| Res |        └─┬──<TAG=x>
-| Res |          └─┬──<TAG=caller:x>
+| Act |      └─┬──<TAG=data>
+| Act |        └─┬──<TAG=x>
+| Act |          └─┬──<TAG=caller:x>
 | Res |            └────<TAG=callee:x> Strongly protected
 ──────────────────────────────────────────────────
 ──────────────────────────────────────────────────
 Warning: this tree is indicative only. Some tags may have been hidden.
 0..   1
 | Act |    └─┬──<TAG=root of the allocation>
-| Res |      └─┬──<TAG=data>
-| Res |        ├─┬──<TAG=x>
-| Res |        │ └─┬──<TAG=caller:x>
+| Act |      └─┬──<TAG=data>
+| Frz |        ├─┬──<TAG=x>
+| Frz |        │ └─┬──<TAG=caller:x>
 | Res |        │   └────<TAG=callee:x>
 | Res |        └────<TAG=y>
 ──────────────────────────────────────────────────
