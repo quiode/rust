@@ -1,3 +1,5 @@
+//@revisions: stack tree
+//@[tree]compile-flags: -Zmiri-tree-borrows
 // Regression test for https://github.com/rust-lang/miri/issues/2536
 // This tests that we don't try to back too far up the stack when selecting a span to report.
 // We should display the as_mut_ptr() call as the location of the invalidation, not the call to
@@ -12,7 +14,8 @@ fn main() {
     let ptr = t.sli.as_ptr();
     inner(&mut t);
     unsafe {
-        let _oof = *ptr; //~ ERROR: /read access .* tag does not exist in the borrow stack/
+        let _oof = *ptr; //~[stack] ERROR: /read access .* tag does not exist in the borrow stack/
+        //~[tree]^ ERROR: /Undefined Behavior: read access through .* at .* is forbidden/
     }
 }
 
