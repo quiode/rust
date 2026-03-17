@@ -549,6 +549,7 @@ impl<S: Stage> NoArgsAttributeParser<S> for RustcNoWritableParser {
     const ALLOWED_TARGETS: AllowedTargets = AllowedTargets::AllowList(&[
         Allow(Target::Fn),
         // TODO: allow those kind of functions? is the optimization done here? is this checked?
+        Allow(Target::Closure),
         Allow(Target::Method(MethodKind::Inherent)),
         Allow(Target::Method(MethodKind::TraitImpl)),
         Allow(Target::Method(MethodKind::Trait { body: true })),
