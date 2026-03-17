@@ -5,6 +5,10 @@
 //@compile-flags: -Zmiri-deterministic-concurrency
 //@compile-flags: -Zmiri-tree-borrows
 
+// TODO: either rewrite the test to account for spurious writes, or replace this comment with a better explanation why we can ignore spurious writes in this test
+#![feature(rustc_attrs)]
+#![allow(internal_features)]
+
 use std::sync::{Arc, Barrier};
 use std::thread;
 
@@ -70,6 +74,7 @@ fn retagx_retagy_spuriousx_retx_rety_writey() {
         synchronized!(b, "start");
         let ptr = ptr;
         synchronized!(b, "retag x (&mut, protect)");
+        #[rustc_no_writable]
         fn as_mut(x: &mut u8, b: (usize, Arc<Barrier>)) -> *mut u8 {
             synchronized!(b, "retag y (&mut, protect)");
             synchronized!(b, "spurious read x");
@@ -95,6 +100,7 @@ fn retagx_retagy_spuriousx_retx_rety_writey() {
         let ptr = ptr;
         synchronized!(b, "retag x (&mut, protect)");
         synchronized!(b, "retag y (&mut, protect)");
+        #[rustc_no_writable]
         fn as_mut(y: &mut u8, b: (usize, Arc<Barrier>)) -> *mut u8 {
             synchronized!(b, "spurious read x");
             synchronized!(b, "ret x");
