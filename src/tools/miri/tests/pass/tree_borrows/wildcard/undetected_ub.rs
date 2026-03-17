@@ -1,6 +1,9 @@
 //@compile-flags: -Zmiri-tree-borrows -Zmiri-permissive-provenance
 // NOTE: This file documents UB that is not detected by wildcard provenance.
 
+#![feature(rustc_attrs)]
+#![allow(internal_features)]
+
 pub fn main() {
     uncertain_provenance();
     protected_exposed();
@@ -69,6 +72,7 @@ pub fn protected_exposed() {
 
     let _int2 = ref2 as *mut u32 as usize;
 
+    #[rustc_no_writable] // TODO: remove this test? the writable attribute allows rust to detect this new UB, so this should no longer be a test
     fn protect(ref3: &mut u32) {
         let int3 = ref3 as *mut u32 as usize;
 
