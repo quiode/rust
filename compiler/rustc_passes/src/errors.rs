@@ -7,7 +7,6 @@ use rustc_errors::{
     MultiSpan, msg,
 };
 use rustc_hir::Target;
-use rustc_hir::attrs::{MirDialect, MirPhase};
 use rustc_macros::{Diagnostic, Subdiagnostic};
 use rustc_middle::ty::{MainDefinition, Ty};
 use rustc_span::{DUMMY_SP, Ident, Span, Symbol};
@@ -988,14 +987,6 @@ pub(crate) struct ImpliedFeatureNotExist {
 }
 
 #[derive(Diagnostic)]
-#[diag("the feature `{$feature}` has already been enabled", code = E0636)]
-pub(crate) struct DuplicateFeatureErr {
-    #[primary_span]
-    pub span: Span,
-    pub feature: Symbol,
-}
-
-#[derive(Diagnostic)]
 #[diag(
     "attributes `#[rustc_const_unstable]`, `#[rustc_const_stable]` and `#[rustc_const_stable_indirect]` require the function or method to be `const`"
 )]
@@ -1145,6 +1136,12 @@ pub(crate) struct ProcMacroBadSig {
 }
 
 #[derive(Diagnostic)]
+#[diag("the feature `{$feature}` has already been enabled")]
+pub(crate) struct DuplicateFeature {
+    pub feature: Symbol,
+}
+
+#[derive(Diagnostic)]
 #[diag(
     "the feature `{$feature}` has been stable since {$since} and no longer requires an attribute to enable"
 )]
@@ -1274,28 +1271,6 @@ pub(crate) struct ReprAlignShouldBeAlignStatic {
     #[help("use `#[rustc_align_static(...)]` instead")]
     pub span: Span,
     pub item: &'static str,
-}
-
-#[derive(Diagnostic)]
-#[diag("`dialect` key required")]
-pub(crate) struct CustomMirPhaseRequiresDialect {
-    #[primary_span]
-    pub attr_span: Span,
-    #[label("`phase` argument requires a `dialect` argument")]
-    pub phase_span: Span,
-}
-
-#[derive(Diagnostic)]
-#[diag("the {$dialect} dialect is not compatible with the {$phase} phase")]
-pub(crate) struct CustomMirIncompatibleDialectAndPhase {
-    pub dialect: MirDialect,
-    pub phase: MirPhase,
-    #[primary_span]
-    pub attr_span: Span,
-    #[label("this dialect...")]
-    pub dialect_span: Span,
-    #[label("... is not compatible with this phase")]
-    pub phase_span: Span,
 }
 
 #[derive(Diagnostic)]
@@ -1433,4 +1408,11 @@ pub(crate) struct UnknownFormatParameterForOnUnimplementedAttr {
     // `false` if we're in rustc_on_unimplemented, since its syntax is a lot more complex.
     #[help(r#"expect either a generic argument name or {"`{Self}`"} as format argument"#)]
     pub help: bool,
+}
+
+#[derive(Diagnostic)]
+#[diag("unknown parameter `{$name}`")]
+#[help(r#"expect either a generic argument name or {"`{Self}`"} as format argument"#)]
+pub(crate) struct OnMoveMalformedFormatLiterals {
+    pub name: Symbol,
 }

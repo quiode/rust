@@ -23,7 +23,6 @@ use crate::attributes::{self, llfn_attrs_from_instance};
 use crate::builder::Builder;
 use crate::context::CodegenCx;
 use crate::llvm::{self, Attribute, AttributePlace, Type, Value};
-use crate::llvm_util;
 use crate::type_of::LayoutLlvmExt;
 
 trait ArgAttributesExt {
@@ -45,6 +44,12 @@ const OPTIMIZATION_ATTRIBUTES: [(ArgAttribute, llvm::AttributeKind); 5] = [
     (ArgAttribute::ReadOnly, llvm::AttributeKind::ReadOnly),
     (ArgAttribute::NoUndef, llvm::AttributeKind::NoUndef),
     (ArgAttribute::Writable, llvm::AttributeKind::Writable),
+];
+
+const CAPTURES_ATTRIBUTES: [(ArgAttribute, llvm::AttributeKind); 3] = [
+    (ArgAttribute::CapturesNone, llvm::AttributeKind::CapturesNone),
+    (ArgAttribute::CapturesAddress, llvm::AttributeKind::CapturesAddress),
+    (ArgAttribute::CapturesReadOnly, llvm::AttributeKind::CapturesReadOnly),
 ];
 
 fn get_attrs<'ll>(this: &ArgAttributes, cx: &CodegenCx<'ll, '_>) -> SmallVec<[&'ll Attribute; 8]> {
@@ -83,18 +88,10 @@ fn get_attrs<'ll>(this: &ArgAttributes, cx: &CodegenCx<'ll, '_>) -> SmallVec<[&'
                 attrs.push(llattr.create_attr(cx.llcx));
             }
         }
-        // captures(...) is only available since LLVM 21.
-        if (21, 0, 0) <= llvm_util::get_version() {
-            const CAPTURES_ATTRIBUTES: [(ArgAttribute, llvm::AttributeKind); 3] = [
-                (ArgAttribute::CapturesNone, llvm::AttributeKind::CapturesNone),
-                (ArgAttribute::CapturesAddress, llvm::AttributeKind::CapturesAddress),
-                (ArgAttribute::CapturesReadOnly, llvm::AttributeKind::CapturesReadOnly),
-            ];
-            for (attr, llattr) in CAPTURES_ATTRIBUTES {
-                if regular.contains(attr) {
-                    attrs.push(llattr.create_attr(cx.llcx));
-                    break;
-                }
+        for (attr, llattr) in CAPTURES_ATTRIBUTES {
+            if regular.contains(attr) {
+                attrs.push(llattr.create_attr(cx.llcx));
+                break;
             }
         }
     } else if cx.tcx.sess.sanitizers().contains(SanitizerSet::MEMORY) {
@@ -509,9 +506,7 @@ impl<'ll, 'tcx> FnAbiLlvmExt<'ll, 'tcx> for FnAbi<'tcx, Ty<'tcx>> {
                 }
                 PassMode::Indirect { attrs, meta_attrs: None, on_stack: false } => {
                     let i = apply(attrs);
-                    if cx.sess().opts.optimize != config::OptLevel::No
-                        && llvm_util::get_version() >= (21, 0, 0)
-                    {
+                    if cx.sess().opts.optimize != config::OptLevel::No {
                         attributes::apply_to_llfn(
                             llfn,
                             llvm::AttributePlace::Argument(i),
