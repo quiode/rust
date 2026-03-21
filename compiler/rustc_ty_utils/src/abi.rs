@@ -436,8 +436,8 @@ fn arg_attrs_for_rust_scalar<'tcx>(
                 let no_writable = match def_id {
                     Some(def_id) => find_attr!(tcx, def_id, RustcNoWritable),
                     None => false, // If no def_id exists, there can't exist an attribute for that def_id so rustc_no_writable can't be set
-                };
-                if matches!(kind, PointerKind::MutableRef { unpin: _ }) && !no_writable {
+                } || tcx.sess.opts.unstable_opts.no_writable;
+                if matches!(kind, PointerKind::MutableRef { .. }) && !no_writable {
                     attrs.set(ArgAttribute::Writable);
                 }
             }

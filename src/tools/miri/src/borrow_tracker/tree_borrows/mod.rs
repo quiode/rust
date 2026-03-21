@@ -143,9 +143,18 @@ impl<'tcx> NewPermission {
         let ty_is_freeze = pointee.is_freeze(*cx.tcx, cx.typing_env());
         let is_protected = retag_kind == RetagKind::FnEntry;
 
-        // Check if the strong mode / writable optimization has been disabled for this function using the `#[rustc_no_writable]` attribute
+        // Check if the strong mode / writable optimization has been disabled for this function using the `#[rustc_no_writable]` attribute or the `-Zno-writable` flag
         let def_id = cx.frame().instance().def_id();
-        let no_writable = find_attr!(cx.tcx, def_id, AttributeKind::RustcNoWritable);
+        let no_writable = find_attr!(cx.tcx, def_id, AttributeKind::RustcNoWritable)
+            || !cx
+                .machine
+                .borrow_tracker
+                .as_ref()
+                .unwrap()
+                .borrow()
+                .borrow_tracker_method
+                .get_tree_borrows_params()
+                .writable;
 
         if matches!(ref_mutability, Some(Mutability::Mut) | None if !ty_is_unpin) {
             // Mutable reference / Box to pinning type: retagging is a NOP.
@@ -171,7 +180,7 @@ impl<'tcx> NewPermission {
         // Everything except for `Cell` gets an initial read.
         let initial_read = |perm: &Permission| !perm.is_cell();
 
-        // Every explicit mutable reference that gets an initial read also gets an initial write (except if it has been explicitly disabled using the `#[rustc_no_writable]` attribute).
+        // Every explicit mutable reference that gets an initial read also gets an initial write (except if it has been explicitly disabled using the `#[rustc_no_writable]` attribute or the `-Zno-writable` flag).
         // Thus implicit mutable references (Two Phase borrowing) and Raw pointers are excluded.
         let initial_write = |perm: &Permission| {
             !no_writable
@@ -299,9 +308,9 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
         let precise_interior_mut = this
             .machine
             .borrow_tracker
-            .as_mut()
+            .as_ref()
             .unwrap()
-            .get_mut()
+            .borrow()
             .borrow_tracker_method
             .get_tree_borrows_params()
             .precise_interior_mut;

@@ -117,7 +117,6 @@ pub fn mutable_unsafe_borrow(_: &mut UnsafeInner) {}
 pub fn mutable_borrow(_: &mut i32) {}
 
 // CHECK: @mutable_borrow_no_writable(ptr noalias noundef align 4 dereferenceable(4) %_1)
-// FIXME #25759 This should also have `nocapture`
 // checks that rustc_no_writable removes the writable attribute
 #[no_mangle]
 #[rustc_no_writable]
