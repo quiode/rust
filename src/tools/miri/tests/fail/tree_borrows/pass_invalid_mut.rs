@@ -9,16 +9,14 @@
 // Make sure that we cannot use a `&mut` whose parent got invalidated.
 // fail/both_borrows/pass_invalid_shr is already checking a forbidden read,
 // so the new thing that this tests is a forbidden write.
-#[rustc_no_writable] // TODO: basically we now manually insert a write here. so is this test actually needed as the behavior has been changed? the write is anyways inserted and would now match the SB example
-fn foo(nope: &mut i32) {
-    *nope = 31; //~ ERROR: /write access through .* is forbidden/
+fn foo(_: &mut i32) {
 }
 
 fn main() {
     let x = &mut 42;
     let xraw = x as *mut _;
     let xref = unsafe { &mut *xraw };
-    *xref = 18; // activate xref
+    *xref = 18; // activate xref, only difference to SB
     let _val = unsafe { *xraw }; // invalidate xref for writing
     foo(xref);
 }
