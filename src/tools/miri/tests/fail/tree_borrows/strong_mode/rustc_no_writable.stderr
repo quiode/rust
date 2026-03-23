@@ -12,7 +12,7 @@ help: the accessed tag <TAG> was created here, in the initial state Reserved
    |
 LL |     let b = unsafe { &mut *ptr };
    |                      ^^^^^^^^^
-help: the accessed tag <TAG> later transitioned to Disabled due to a reborrow (acting as a foreign read access) at offsets [0x0..0x4]
+help: the accessed tag <TAG> later transitioned to Disabled due to a reborrow (acting as a foreign write access) at offsets [0x0..0x4]
   --> tests/fail/tree_borrows/strong_mode/rustc_no_writable.rs:LL:CC
    |
 LL | pub fn foo(_x: &mut i32) {}

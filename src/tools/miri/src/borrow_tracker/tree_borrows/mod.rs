@@ -381,7 +381,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                     parent_prov,
                     range_in_alloc,
                     *access,
-                    diagnostics::AccessCause::Reborrow,
+                    diagnostics::AccessCause::Reborrow(*access),
                     this.machine.borrow_tracker.as_ref().unwrap(),
                     alloc_id,
                     this.machine.current_user_relevant_span(),
