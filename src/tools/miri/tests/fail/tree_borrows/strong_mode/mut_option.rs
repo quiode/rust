@@ -10,7 +10,7 @@ fn main() {
     let b = unsafe { &mut *ptr };
 
     let _c = foo(Some(a));
-    println!("{:?}", *b);
+    println!("{:?}", *b); //~ ERROR: /Undefined Behavior: reborrow through .* at .* is forbidden/
 }
 
 // Even though `_x` is not a mutable borrow, the writable attribute is still inserted in LLVM (due to the implementation of `Option``) and thus a write is inserted in the semantics.
