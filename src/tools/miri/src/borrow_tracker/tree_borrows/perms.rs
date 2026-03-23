@@ -262,13 +262,6 @@ impl Permission {
         self.inner == Frozen
     }
 
-    #[cfg(test)]
-    /// Check if `self` can be the initial state of a reborrowed mutable reference that is either
-    /// protected or not interior mutable (`ReservedFrz { conflicted: false }`)
-    pub fn is_reserved_frz(&self) -> bool {
-        self.inner == ReservedFrz { conflicted: false }
-    }
-
     /// Check if `self` is the shared-reference-to-interior-mutable-data state of a pointer.
     pub fn is_cell(&self) -> bool {
         self.inner == Cell
