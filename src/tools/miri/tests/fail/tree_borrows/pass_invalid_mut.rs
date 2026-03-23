@@ -6,7 +6,7 @@
 // Make sure that we cannot use a `&mut` whose parent got invalidated.
 // fail/both_borrows/pass_invalid_shr is already checking a forbidden read,
 // so the new thing that this tests is a forbidden write.
-fn foo(_: &mut i32) {
+fn foo(_: &mut i32) { //~ ERROR: /Undefined Behavior: reborrow through .* at .* is forbidden/
 }
 
 fn main() {
