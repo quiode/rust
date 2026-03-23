@@ -5,7 +5,6 @@
 //@compile-flags: -Zmiri-deterministic-concurrency
 //@compile-flags: -Zmiri-tree-borrows
 
-// TODO: either rewrite the test to account for spurious writes, or replace this comment with a better explanation why we can ignore spurious writes in this test
 #![feature(rustc_attrs)]
 #![allow(internal_features)]
 
@@ -74,7 +73,7 @@ fn retagx_retagy_retx_writey_rety() {
         synchronized!(b, "start");
         let ptr = ptr;
         synchronized!(b, "retag x (&mut, protect)");
-        #[rustc_no_writable]
+        #[rustc_no_writable] // restore the old behavior, as we're testing reads here, not writes
         fn as_mut(x: &mut u8, b: (usize, Arc<Barrier>)) -> *mut u8 {
             synchronized!(b, "retag y (&mut, protect)");
             synchronized!(b, "location where spurious read of x would happen in the target");
