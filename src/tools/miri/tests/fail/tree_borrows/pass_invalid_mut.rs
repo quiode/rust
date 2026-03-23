@@ -3,9 +3,6 @@
 // but the SB version passes TB without error.
 // An additional write access is inserted so that this test properly fails.
 
-#![feature(rustc_attrs)]
-#![allow(internal_features)]
-
 // Make sure that we cannot use a `&mut` whose parent got invalidated.
 // fail/both_borrows/pass_invalid_shr is already checking a forbidden read,
 // so the new thing that this tests is a forbidden write.
