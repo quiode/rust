@@ -34,7 +34,7 @@ fn print(msg: &str) {
     eprintln!("{msg}");
 }
 
-#[rustc_no_writable] // TODO: this now also introduces a write on x, thus changing the state. either update the tests to reflect that or disable the write
+#[rustc_no_writable] // force test to have old behavior, such that the correct property is tested
 unsafe fn read_second<T>(x: &mut T, y: *mut u8) {
     name!(x as *mut T as *mut u8=>1, "caller:x");
     name!(x as *mut T as *mut u8, "callee:x");

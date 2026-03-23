@@ -136,8 +136,7 @@ fn protector_conflicted_release() {
     let ref1 = unsafe { &mut *ptr_base };
     let ref2 = unsafe { &mut *ptr_base };
 
-    let protect = #[rustc_no_writable]
-    // TODO: fix test, UB as expected from inserting a write. the whole point here is to test wildcards, and in the closure specifically to only do a read. inserting a write at the beginning would harm the test for now.
+    let protect = #[rustc_no_writable] // forces test to have old behavior, thus testing the wanted property
     |arg: &mut u32| {
         // Expose arg.
         let int = arg as *mut u32 as usize;
