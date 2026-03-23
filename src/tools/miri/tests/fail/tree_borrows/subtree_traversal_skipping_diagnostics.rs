@@ -11,7 +11,7 @@
 // other_ptr = root : Unique
 // intermediary     : Frozen // an intermediary node
 // m                : Reserved
-#[rustc_no_writable] // TODO: force test to have old behavior. this probably makes sense here as we wan't to show the changed diagnostic tree and not specifically a special borrow. still maybe this test in general is useless or should be rewritten
+#[rustc_no_writable] // Force test to have old behavior. This makes sense here as we want to show the changed diagnostic tree and not specifically a special borrow.
 fn write_to_mut(m: &mut u8, other_ptr: *const u8) {
     unsafe {
         std::hint::black_box(*other_ptr);
