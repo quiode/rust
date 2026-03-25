@@ -16,8 +16,7 @@ pub fn main() {
     let wild = int2 as *mut u32;
     let wild_ref = unsafe { &mut *wild };
 
-    let mut protect = #[rustc_no_writable]
-    // TODO: disable new behavior for now to make test the old thing again. probably have to rewrite this to test the desired behavior instead of disabling new feature
+    let mut protect = #[rustc_no_writable] // forces test to have old behavior, thus testing the wanted property
     |_arg: &mut u32| {
         // _arg is a protected pointer with wildcard parent.
 
