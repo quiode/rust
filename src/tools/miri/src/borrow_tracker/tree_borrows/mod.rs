@@ -368,6 +368,13 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
                 // Some reborrows incur a read/write access to the parent.
                 // As we always do a read when we do a write, we always do a read here and conditionally also a write.
 
+                // writing to an immutable allocation (static variables) is UB, check this here
+                if *access == AccessKind::Write
+                    && this.get_alloc_mutability(alloc_id).unwrap().is_not()
+                {
+                    throw_ub!(WriteToReadOnly(alloc_id))
+                }
+
                 // Adjust range to be relative to allocation start (rather than to `place`).
                 let range_in_alloc = AllocRange {
                     start: Size::from_bytes(perm_range.start) + base_offset,
