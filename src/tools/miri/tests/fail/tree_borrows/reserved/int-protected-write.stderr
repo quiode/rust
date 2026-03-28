@@ -5,7 +5,7 @@ Warning: this tree is indicative only. Some tags may have been hidden.
 | Act |      └─┬──<TAG=n>
 | Act |        ├─┬──<TAG=x>
 | Act |        │ └─┬──<TAG=caller:x>
-| Res |        │   └────<TAG=callee:x> Strongly protected
+| Act |        │   └────<TAG=callee:x> Strongly protected
 | Dis |        └────<TAG=y, callee:y, caller:y>
 ──────────────────────────────────────────────────
 error: Undefined Behavior: write access through <TAG> (y, callee:y, caller:y) at ALLOC[0x0] is forbidden

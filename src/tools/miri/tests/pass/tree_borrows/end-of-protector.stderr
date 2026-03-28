@@ -12,7 +12,7 @@ Warning: this tree is indicative only. Some tags may have been hidden.
 | Act |      └─┬──<TAG=data>
 | Act |        └─┬──<TAG=x>
 | Act |          └─┬──<TAG=caller:x>
-| Res |            └────<TAG=callee:x> Strongly protected
+| Act |            └────<TAG=callee:x> Strongly protected
 ──────────────────────────────────────────────────
 ──────────────────────────────────────────────────
 Warning: this tree is indicative only. Some tags may have been hidden.
@@ -21,7 +21,7 @@ Warning: this tree is indicative only. Some tags may have been hidden.
 | Act |      └─┬──<TAG=data>
 | Frz |        ├─┬──<TAG=x>
 | Frz |        │ └─┬──<TAG=caller:x>
-| Res |        │   └────<TAG=callee:x>
+| Frz |        │   └────<TAG=callee:x>
 | Res |        └────<TAG=y>
 ──────────────────────────────────────────────────
 ──────────────────────────────────────────────────

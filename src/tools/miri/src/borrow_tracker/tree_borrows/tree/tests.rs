@@ -701,6 +701,7 @@ mod spurious_read {
     }
 
     #[test]
+    // TODO: this now fails, as `is_initial` now also can be Unique
     /// For each of the patterns described above, execute it once
     /// as-is, and once with a spurious read inserted. Report any UB
     /// in the target but not in the source.

@@ -111,16 +111,13 @@ impl<'tcx> Tree {
 pub struct NewPermission {
     /// Permission for the frozen part of the range.
     freeze_perm: Permission,
-    /// Whether a read access should be performed on the frozen part on a retag.
-    freeze_read: bool,
+    /// Whether and what kind of access should be performed on the frozen part on a retag.
+    freeze_access: Option<AccessKind>,
     /// Whether a write access should be performed on the frozen part on a retag.
-    freeze_write: bool,
     /// Permission for the non-frozen part of the range.
     nonfreeze_perm: Permission,
-    /// Whether a read access should be performed on the non-frozen part on a retag.
-    nonfreeze_read: bool,
-    /// Whether a write access should be performed on the non-frozen part on a retag.
-    nonfreeze_write: bool,
+    /// Whether and what kind of access should be performed on the non-frozen part on a retag.
+    nonfreeze_access: Option<AccessKind>,
     /// Permission for memory outside the range.
     outside_perm: Permission,
     /// Whether this pointer is part of the arguments of a function call.
@@ -177,25 +174,33 @@ impl<'tcx> NewPermission {
             _ => Permission::new_reserved_im(),
         };
 
-        // Everything except for `Cell` gets an initial read.
-        let initial_read = |perm: &Permission| !perm.is_cell();
+        // [0] contains freeze information, [1] contains non freeze information
+        let mut access_perms = [(freeze_perm, None), (nonfreeze_perm, None)];
+        for (permission, access) in &mut access_perms {
+            // Everything except for `Cell` gets an initial read.
+            if !permission.is_cell() {
+                // Every explicit mutable reference that gets an initial read also gets an initial write (except if it has been explicitly disabled using the `#[rustc_no_writable]` attribute or the `-Zno-writable` flag).
+                // Thus implicit mutable references (Two Phase borrowing) and Raw pointers are excluded.
+                if !no_writable
+                    && Some(Mutability::Mut) == ref_mutability
+                    && matches!(retag_kind, RetagKind::FnEntry)
+                // TODO: insert write on all mutable borrows or only function entry? function entry would be enough for current writable optimization
+                {
+                    *access = Some(AccessKind::Write);
 
-        // Every explicit mutable reference that gets an initial read also gets an initial write (except if it has been explicitly disabled using the `#[rustc_no_writable]` attribute or the `-Zno-writable` flag).
-        // Thus implicit mutable references (Two Phase borrowing) and Raw pointers are excluded.
-        let initial_write = |perm: &Permission| {
-            !no_writable
-                && Some(Mutability::Mut) == ref_mutability
-                && initial_read(perm)
-                && matches!(retag_kind, RetagKind::FnEntry) // TODO: insert write on all mutable borrows or only function entry? function entry would be enough for current writable optimization
-        };
+                    // if cell gets a write, permission is gonna be set to Unique
+                    *permission = Permission::new_unique();
+                } else {
+                    *access = Some(AccessKind::Read);
+                }
+            }
+        }
 
         Some(NewPermission {
-            freeze_perm,
-            freeze_read: initial_read(&freeze_perm),
-            freeze_write: initial_write(&freeze_perm),
-            nonfreeze_perm,
-            nonfreeze_read: initial_read(&nonfreeze_perm),
-            nonfreeze_write: initial_write(&nonfreeze_perm),
+            freeze_perm: access_perms[0].0,
+            freeze_access: access_perms[0].1,
+            nonfreeze_perm: access_perms[1].0,
+            nonfreeze_access: access_perms[1].1,
             outside_perm: if ty_is_freeze { freeze_perm } else { nonfreeze_perm },
             protector: is_protected.then_some(if ref_mutability.is_some() {
                 // Strong protector for references
@@ -317,18 +322,13 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
 
         // Compute initial "inside" permissions.
         let loc_state = |frozen: bool| -> (LocationState, Option<AccessKind>) {
-            let (perm, read, write) = if frozen {
-                (new_perm.freeze_perm, new_perm.freeze_read, new_perm.freeze_write)
+            let (perm, access) = if frozen {
+                (new_perm.freeze_perm, new_perm.freeze_access)
             } else {
-                (new_perm.nonfreeze_perm, new_perm.nonfreeze_read, new_perm.nonfreeze_write)
+                (new_perm.nonfreeze_perm, new_perm.nonfreeze_access)
             };
             let sifa = perm.strongest_idempotent_foreign_access(protected);
 
-            let access = match (read, write) {
-                (_, true) => Some(AccessKind::Write),
-                (true, false) => Some(AccessKind::Read),
-                (false, false) => None,
-            };
             let state = if access.is_some() {
                 LocationState::new_accessed(perm, sifa)
             } else {
@@ -618,11 +618,9 @@ pub trait EvalContextExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
             // argument doesn't matter
             // (`ty_is_freeze || true` in `new_reserved` will always be `true`).
             freeze_perm: Permission::new_reserved_frz(),
-            freeze_read: true,
-            freeze_write: true,
+            freeze_access: Some(AccessKind::Write),
             nonfreeze_perm: Permission::new_reserved_frz(),
-            nonfreeze_read: true,
-            nonfreeze_write: true,
+            nonfreeze_access: Some(AccessKind::Write),
             outside_perm: Permission::new_reserved_frz(),
             protector: Some(ProtectorKind::StrongProtector),
         };
