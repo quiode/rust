@@ -366,7 +366,7 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
         for (perm_range, (_perm, access)) in inside_perms.iter_all() {
             if let Some(access) = access {
                 // Some reborrows incur a read/write access to the parent.
-                // As we always do a read when we do a write, we always do a read here and conditionally also a write.
+                // As a write also implies a read, a single write is performed instead of a read and a write.
 
                 // writing to an immutable allocation (static variables) is UB, check this here
                 if *access == AccessKind::Write
