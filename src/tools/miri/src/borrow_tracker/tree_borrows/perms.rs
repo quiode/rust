@@ -265,6 +265,11 @@ impl Permission {
         self.inner == Cell
     }
 
+    #[cfg(test)]
+    pub fn is_unique(&self) -> bool {
+        self.inner == Unique
+    }
+
     /// Default initial permission for mutable references at the start of a function that is either
     /// protected or not interior mutable (see *writable* and *strong mode*) and of the root of a new tree at inbounds positions.
     pub fn new_unique() -> Self {
