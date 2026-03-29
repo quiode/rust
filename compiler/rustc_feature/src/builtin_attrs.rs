@@ -1415,7 +1415,7 @@ pub static BUILTIN_ATTRIBUTES: &[BuiltinAttribute] = &[
         "`#[rustc_scalable_vector]` defines a scalable vector type"
     ),
     rustc_attr!(
-        rustc_no_writable, Normal, template!(Word), WarnFollowing, EncodeCrossCrate::Yes, "`#[rustc_no_writable]` stops the compiler from adding the `writable` flag in llvm and stops the checking for spurious writes in Miri"
+        rustc_no_writable, Normal, template!(Word), WarnFollowing, EncodeCrossCrate::Yes, "`#[rustc_no_writable]` stops the compiler from adding the `writable` flag in LLVM, thus under Tree Borrows, mutable retags no longer count as writes"
     ),
 
     // ==========================================================================

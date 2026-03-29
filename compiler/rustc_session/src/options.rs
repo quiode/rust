@@ -2531,7 +2531,7 @@ options! {
     no_unique_section_names: bool = (false, parse_bool, [TRACKED],
         "do not use unique names for text and data sections when -Z function-sections is used"),
     no_writable: bool = (false, parse_bool, [TRACKED],
-        "do not insert the writable LLVM attribute; also disables the tests in miri"),
+        "do not insert the writable LLVM attribute; mutable retags don't count as writes under Tree Borrows"),
     normalize_docs: bool = (false, parse_bool, [TRACKED],
         "normalize associated items in rustdoc when generating documentation"),
     offload: Vec<crate::config::Offload> = (Vec::new(), parse_offload, [TRACKED],
