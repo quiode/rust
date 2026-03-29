@@ -313,9 +313,9 @@ trait EvalContextPrivExt<'tcx>: crate::MiriInterpCxExt<'tcx> {
         let precise_interior_mut = this
             .machine
             .borrow_tracker
-            .as_ref()
+            .as_mut()
             .unwrap()
-            .borrow()
+            .get_mut()
             .borrow_tracker_method
             .get_tree_borrows_params()
             .precise_interior_mut;

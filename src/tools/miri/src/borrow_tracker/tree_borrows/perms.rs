@@ -251,12 +251,10 @@ impl Permission {
     pub fn is_initial(&self) -> bool {
         self.inner.is_initial()
     }
-
     /// Check if `self` is the terminal state of a pointer (is `Disabled`).
     pub fn is_disabled(&self) -> bool {
         self.inner == Disabled
     }
-
     /// Check if `self` is the never-allow-writes-again state of a pointer (is `Frozen`).
     pub fn is_frozen(&self) -> bool {
         self.inner == Frozen
