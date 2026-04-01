@@ -15,21 +15,3 @@ LL |     unsafe { increment_int(&mut x) };
            1: main
                at tests/native-lib/pass/ptr_write_access.rs:LL:CC
 
-error: Undefined Behavior: memory access failed: attempting to access 4 bytes, but got $HEX[noalloc] which is a dangling pointer (it has no provenance)
-  --> tests/native-lib/pass/ptr_write_access.rs:LL:CC
-   |
-LL |     assert_eq!(unsafe { *tuple.ptr1 }, x);
-   |                         ^^^^^^^^^^^ Undefined Behavior occurred here
-   |
-   = help: this indicates a bug in the program: it performed an invalid operation, and caused Undefined Behavior
-   = help: see https://doc.rust-lang.org/nightly/reference/behavior-considered-undefined.html for further information
-   = note: stack backtrace:
-           0: test_swap_ptr_tuple
-               at tests/native-lib/pass/ptr_write_access.rs:LL:CC
-           1: main
-               at tests/native-lib/pass/ptr_write_access.rs:LL:CC
-
-note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
-
-error: aborting due to 1 previous error; 1 warning emitted
-
