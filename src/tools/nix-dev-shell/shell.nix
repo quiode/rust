@@ -17,8 +17,6 @@ pkgs.mkShell {
     pkgs.glibc.out
     pkgs.glibc.static
     pkgs.cargo # needed for rust-analyzer vscode extension
-    pkgs.nodePackages.nodejs # need nodejs to run rustdoc-js suite
-    pkgs.yarn # needed for rustdoc-gui test
     x
     # Get the runtime deps of the x wrapper
   ] ++ lists.flatten (attrsets.attrValues env);
