@@ -1,0 +1,3 @@
+[
+    { "krate": "tb_sb_differences_canary", "function": "test::ignore_this" }
+]

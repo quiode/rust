@@ -1,14 +1,39 @@
+use std::collections::HashSet;
+use std::sync::LazyLock;
+
 use rustc_abi::Size;
 use rustc_hir::find_attr;
 use rustc_middle::mir::Mutability;
 use rustc_middle::ty::layout::HasTypingEnv;
 use rustc_middle::ty::{self, Ty};
+use serde::Deserialize;
 
 use self::foreign_access_skipping::IdempotentForeignAccess;
 use self::tree::LocationState;
 use crate::borrow_tracker::{AccessKind, GlobalState, GlobalStateInner, ProtectorKind};
 use crate::concurrency::data_race::{NaReadType, NaWriteType};
 use crate::*;
+
+/// A function to ignore during Tree Borrows analysis, identified by crate name and path.
+///
+/// Example JSON entry:
+/// ```json
+/// { "krate": "std", "function": "collections::HashMap::insert" }
+/// ```
+#[derive(Debug, Deserialize, PartialEq, Eq, Hash)]
+pub struct IgnoreEntry {
+    pub krate: String,
+    pub function: String,
+}
+
+/// Functions to ignore, embedded from `ignore_list.json` at compile time.
+static IGNORE_LIST_JSON: &str = include_str!("../../../ignore_list.json");
+
+static IGNORE_LIST: LazyLock<HashSet<IgnoreEntry>> = LazyLock::new(|| {
+    let entries: Vec<IgnoreEntry> =
+        serde_json::from_str(IGNORE_LIST_JSON).expect("invalid ignore_list.json");
+    entries.into_iter().collect()
+});
 
 pub mod diagnostics;
 mod foreign_access_skipping;
@@ -145,7 +170,11 @@ impl<'tcx> NewPermission {
         let implicit_writes_enabled = is_protected && {
             let implicit_writes = cx.get_tree_borrows_params().implicit_writes;
             let def_id = cx.frame().instance().def_id();
-            implicit_writes && !find_attr!(cx.tcx, def_id, RustcNoWritable)
+            let in_ignore_list = IGNORE_LIST.contains(&IgnoreEntry {
+                krate: cx.tcx.crate_name(def_id.krate).to_string(),
+                function: cx.tcx.def_path_str(def_id),
+            });
+            implicit_writes && !find_attr!(cx.tcx, def_id, RustcNoWritable) && !in_ignore_list
         };
 
         if matches!(ref_mutability, Some(Mutability::Mut) | None if !ty_is_unpin) {
