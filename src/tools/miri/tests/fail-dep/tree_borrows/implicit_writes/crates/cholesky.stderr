@@ -1,0 +1,40 @@
+error: Undefined Behavior: reborrow through <TAG> at ALLOC[0x18] is forbidden
+  --> CARGO_REGISTRY/.../matrix_view.rs:LL:CC
+   |
+LL |                 slice::from_raw_parts_mut(self.ptr, sz + 1)
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined Behavior occurred here
+   |
+   = help: this indicates a potential bug in the program: it performed an invalid operation, but the Tree Borrows rules it violated are still experimental
+   = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/tree-borrows.md for further information
+   = help: the accessed tag <TAG> has state Disabled which forbids this reborrow (acting as a child read access)
+help: the accessed tag <TAG> was created here, in the initial state Reserved
+  --> tests/fail-dep/tree_borrows/implicit_writes/crates/cholesky.rs:LL:CC
+   |
+LL |     let _chol = nalgebra::linalg::Cholesky::new(m);
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: the accessed tag <TAG> later transitioned to Disabled due to a reborrow (acting as a foreign write access) at offsets [0x0..0x20]
+  --> tests/fail-dep/tree_borrows/implicit_writes/crates/cholesky.rs:LL:CC
+   |
+LL |     let _chol = nalgebra::linalg::Cholesky::new(m);
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = help: this transition corresponds to a loss of read and write permissions
+   = note: stack backtrace:
+           0: <nalgebra::ViewStorageMut<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>> as nalgebra::RawStorageMut<f64, nalgebra::Dyn>>::as_mut_slice_unchecked
+               at CARGO_REGISTRY/.../matrix_view.rs:LL:CC
+           1: nalgebra::base::blas_uninit::axcpy_uninit::<nalgebra::uninit::Init, f64, nalgebra::Dyn, nalgebra::Dyn, nalgebra::ViewStorageMut<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>, nalgebra::ViewStorage<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>>
+               at CARGO_REGISTRY/.../blas_uninit.rs:LL:CC
+           2: nalgebra::base::blas::<impl nalgebra::Matrix<f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::ViewStorageMut<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>>>::axcpy::<nalgebra::Dyn, nalgebra::ViewStorage<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>>
+               at CARGO_REGISTRY/.../blas.rs:LL:CC
+           3: nalgebra::base::blas::<impl nalgebra::Matrix<f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::ViewStorageMut<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>>>::axpy::<nalgebra::Dyn, nalgebra::ViewStorage<'_, f64, nalgebra::Dyn, nalgebra::Const<TAG>, nalgebra::Const<TAG>, nalgebra::Const<TAG>>>
+               at CARGO_REGISTRY/.../blas.rs:LL:CC
+           4: nalgebra::Cholesky::<f64, nalgebra::Const<TAG>>::new_internal
+               at CARGO_REGISTRY/.../cholesky.rs:LL:CC
+           5: nalgebra::Cholesky::<f64, nalgebra::Const<TAG>>::new
+               at CARGO_REGISTRY/.../cholesky.rs:LL:CC
+           6: main
+               at tests/fail-dep/tree_borrows/implicit_writes/crates/cholesky.rs:LL:CC
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+

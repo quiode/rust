@@ -17,6 +17,7 @@ getrandom_03 = { package = "getrandom", version = "0.3" }
 
 [target.'cfg(not(any(target_arch = "wasm32", target_arch = "wasm64")))'.dependencies]
 tempfile = "3"
+nalgebra = { version = "0.34" }
 page_size = "0.6"
 # Avoid pulling in all of tokio's dependencies.
 # However, without `net` and `signal`, tokio uses fewer relevant system APIs.
