@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 # all dependencies (and their transitive ones) listed here can be used in `tests/*-dep`.
+closure-ice-lib = { path = "closure-ice-lib" }
 libc = "0.2"
 num_cpus = "1.10.1"
 cfg-if = "1"
@@ -36,3 +37,4 @@ windows-sys = { version = "0.61", features = [
 
 # Make sure we are not part of the rustc workspace.
 [workspace]
+members = ["closure-ice-lib"]

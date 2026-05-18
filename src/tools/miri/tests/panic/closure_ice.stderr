@@ -1,0 +1,21 @@
+
+thread 'rustc' ($TID) panicked at /rustc-dev//compiler/rustc_metadata/src/rmeta/decoder.rs:LL:CC:
+assertion `left == right` failed
+  left: SyntheticCoroutineBody
+ right: Ctor
+stack backtrace:
+
+error: the compiler unexpectedly panicked. This is a bug
+
+
+
+
+
+query stack during panic:
+#0 [attrs_for_def] collecting attributes of `closure_ice_lib::line_sink::{closure#0}::{synthetic#0}`
+end of query stack
+
+Miri caused an ICE during evaluation. Here's the interpreter backtrace at the time of the panic:
+  --> closure-ice-lib/src/lib.rs:LL:CC
+   |
+
