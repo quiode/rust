@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashMap};
 use std::sync::LazyLock;
 
 use rustc_abi::Size;
@@ -15,10 +15,13 @@ use crate::concurrency::data_race::{NaReadType, NaWriteType};
 use crate::*;
 
 /// A function to ignore during Tree Borrows analysis, identified by crate name and path.
+/// The `function` field supports glob patterns where `*` matches any sequence of characters.
 ///
-/// Example JSON entry:
+/// Example JSON entries:
 /// ```json
+/// { "krate": "a2lfile", "function": "*" }
 /// { "krate": "std", "function": "collections::HashMap::insert" }
+/// { "krate": "std", "function": "collections::HashMap::*" }
 /// ```
 #[derive(Debug, Deserialize, PartialEq, Eq, Hash)]
 pub struct IgnoreEntry {
@@ -26,13 +29,67 @@ pub struct IgnoreEntry {
     pub function: String,
 }
 
+/// Returns `true` if `text` matches the glob `pattern`, where `*` matches any sequence of characters.
+fn glob_match(pattern: &str, text: &str) -> bool {
+    // Split on `*` and check that each segment appears in order in `text`.
+    let mut segments = pattern.split('*');
+
+    let Some(first) = segments.next() else { return true };
+    if !text.starts_with(first) {
+        return false;
+    }
+
+    let mut rest = &text[first.len()..];
+    for segment in segments {
+        if segment.is_empty() {
+            continue;
+        }
+        let Some(pos) = rest.find(segment) else { return false };
+        rest = &rest[pos + segment.len()..];
+    }
+
+    // If the pattern does not end with `*`, the match must consume the entire text.
+    if !pattern.ends_with('*') && !rest.is_empty() {
+        return false;
+    }
+
+    true
+}
+
+/// Per-crate pattern set: exact function names use a `BTreeSet` for O(log n) lookup;
+/// glob patterns (containing `*`) use a `Vec` for linear matching.
+struct PatternSet {
+    exact: BTreeSet<String>,
+    globs: Vec<String>,
+}
+
+impl PatternSet {
+    fn matches(&self, function: &str) -> bool {
+        self.exact.contains(function) || self.globs.iter().any(|p| glob_match(p, function))
+    }
+}
+
 /// Functions to ignore, embedded from `ignore_list.json` at compile time.
 static IGNORE_LIST_JSON: &str = include_str!("../../../ignore_list.json");
 
-static IGNORE_LIST: LazyLock<HashSet<IgnoreEntry>> = LazyLock::new(|| {
+/// Ignore list keyed by crate name for O(1) crate lookup, then per-crate `PatternSet`.
+static IGNORE_LIST: LazyLock<HashMap<String, PatternSet>> = LazyLock::new(|| {
     let entries: Vec<IgnoreEntry> =
         serde_json::from_str(IGNORE_LIST_JSON).expect("invalid ignore_list.json");
-    entries.into_iter().collect()
+
+    let mut map: HashMap<String, PatternSet> = HashMap::new();
+    for entry in entries {
+        let set = map.entry(entry.krate).or_insert_with(|| PatternSet {
+            exact: BTreeSet::new(),
+            globs: Vec::new(),
+        });
+        if entry.function.contains('*') {
+            set.globs.push(entry.function);
+        } else {
+            set.exact.insert(entry.function);
+        }
+    }
+    map
 });
 
 pub mod diagnostics;
@@ -170,10 +227,10 @@ impl<'tcx> NewPermission {
         let implicit_writes_enabled = is_protected && {
             let implicit_writes = cx.get_tree_borrows_params().implicit_writes;
             let def_id = cx.frame().instance().def_id();
-            let in_ignore_list = IGNORE_LIST.contains(&IgnoreEntry {
-                krate: cx.tcx.crate_name(def_id.krate).to_string(),
-                function: cx.tcx.def_path_str(def_id),
-            });
+            let krate = cx.tcx.crate_name(def_id.krate).to_string();
+            let function = cx.tcx.def_path_str(def_id);
+            let in_ignore_list =
+                IGNORE_LIST.get(&krate).is_some_and(|set| set.matches(&function));
             implicit_writes && !find_attr!(cx.tcx, def_id, RustcNoWritable) && !in_ignore_list
         };
 

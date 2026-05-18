@@ -1,4 +1,4 @@
-// Causes problems in: `a2lfile`, `acir`.
+// Causes problems in: `a2lfile`, `acir`, `actix-files`.
 //@compile-flags: -Zmiri-tree-borrows -Zmiri-tree-borrows-implicit-writes -Zmiri-disable-isolation
 //@error-in-other-file: /write access through .* is forbidden/
 
