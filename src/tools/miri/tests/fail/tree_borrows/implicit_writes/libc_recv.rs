@@ -1,6 +1,6 @@
 // Demonstrates that `libc::recv` triggers a Tree Borrows violation under implicit writes.
 //
-// This causes problems in: `actix-files`.
+// This causes problems in: `actix-files`, `actix-multipart`.
 //
 //@ignore-target: windows
 //@compile-flags: -Zmiri-tree-borrows -Zmiri-tree-borrows-implicit-writes -Zmiri-disable-isolation
