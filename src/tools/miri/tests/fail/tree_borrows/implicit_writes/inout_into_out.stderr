@@ -1,0 +1,31 @@
+error: Undefined Behavior: reborrow through <TAG> at ALLOC[0x3] is forbidden
+  --> tests/fail/tree_borrows/implicit_writes/inout_into_out.rs:LL:CC
+   |
+LL |         let _ = unsafe { std::slice::from_raw_parts(self.out_ptr, 4) };
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Undefined Behavior occurred here
+   |
+   = help: this indicates a potential bug in the program: it performed an invalid operation, but the Tree Borrows rules it violated are still experimental
+   = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/tree-borrows.md for further information
+   = help: the accessed tag <TAG> is foreign to the protected tag <TAG> (i.e., it is not a child)
+   = help: this reborrow (acting as a foreign read access) would cause the protected tag <TAG> (currently Unique) to become Disabled
+   = help: protected tags must never be Disabled
+help: the accessed tag <TAG> was created here
+  --> tests/fail/tree_borrows/implicit_writes/inout_into_out.rs:LL:CC
+   |
+LL |     let ptr = buf.as_mut_ptr();
+   |               ^^^^^^^^^^^^^^^^
+help: the protected tag <TAG> was created here, in the initial state Reserved
+  --> tests/fail/tree_borrows/implicit_writes/inout_into_out.rs:LL:CC
+   |
+LL |     fn into_out(self) {
+   |                 ^^^^
+   = note: stack backtrace:
+           0: Buf::<'_>::into_out
+               at tests/fail/tree_borrows/implicit_writes/inout_into_out.rs:LL:CC
+           1: main
+               at tests/fail/tree_borrows/implicit_writes/inout_into_out.rs:LL:CC
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+
