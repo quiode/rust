@@ -1,0 +1,43 @@
+error: Undefined Behavior: reborrow through <TAG> at ALLOC[0x0] is forbidden
+  --> /rustc/a2920c245c7d8c1d134c47cbb6e7c42889096a55/library/std/src/io/cursor.rs:LL:CC
+   |
+   = note: Undefined Behavior occurred here
+   |
+   = help: this indicates a potential bug in the program: it performed an invalid operation, but the Tree Borrows rules it violated are still experimental
+   = help: see https://github.com/rust-lang/unsafe-code-guidelines/blob/master/wip/tree-borrows.md for further information
+   = help: the accessed tag <TAG> is a child of the conflicting tag <TAG>
+   = help: the conflicting tag <TAG> has state Frozen which forbids this reborrow (acting as a child write access)
+help: the accessed tag <TAG> was created here
+  --> tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+   |
+LL |         let n = stream.read(data).unwrap();
+   |                             ^^^^
+help: the conflicting tag <TAG> was created here, in the initial state Reserved
+  --> tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+   |
+LL |         let ptr = spare.as_mut_ptr().cast::<u8>();
+   |                   ^^^^^^^^^^^^^^^^^^
+help: the conflicting tag <TAG> later transitioned to Unique due to a child write access at offsets [0x0..0x1]
+  --> tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+   |
+LL |             ptr.add(i).write(0);
+   |             ^^^^^^^^^^^^^^^^^^^
+   = help: this transition corresponds to the first write to a 2-phase borrowed mutable reference
+help: the conflicting tag <TAG> later transitioned to Frozen due to a reborrow (acting as a foreign read access) at offsets [0x0..0x40]
+  --> tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+   |
+LL |         let data = std::slice::from_raw_parts_mut(ptr, spare.len());
+   |                                                        ^^^^^
+   = help: this transition corresponds to a loss of write permissions
+   = note: stack backtrace:
+           0: std::io::cursor::<impl std::io::Read for std::io::Cursor<&[u8; 5]>>::read
+               at /rustc/a2920c245c7d8c1d134c47cbb6e7c42889096a55/library/std/src/io/cursor.rs:LL:CC
+           1: fill_buf::<std::io::Cursor<&[u8; 5]>>
+               at tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+           2: main
+               at tests/fail/tree_borrows/implicit_writes/input_buffer_read.rs:LL:CC
+
+note: some details are omitted, run with `MIRIFLAGS=-Zmiri-backtrace=full` for a verbose backtrace
+
+error: aborting due to 1 previous error
+
