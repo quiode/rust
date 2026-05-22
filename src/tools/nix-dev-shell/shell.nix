@@ -20,6 +20,12 @@ pkgs.mkShell {
     # Get the runtime deps of the x wrapper
   ] ++ lists.flatten (attrsets.attrValues env);
 
+  shellHook = ''
+    PROJECT_ROOT=$(git rev-parse --show-toplevel)
+    export PATH="$PROJECT_ROOT/out/usr/local/bin:$PATH"
+    export DESTDIR="$PROJECT_ROOT/out"
+  '';
+
   env = {
     # Avoid creating text files for ICEs.
     RUSTC_ICE = 0;
